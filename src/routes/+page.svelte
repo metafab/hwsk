@@ -1,15 +1,38 @@
 <script lang="ts">
-	export let data;
+	export let form;
 </script>
 
 <h1>Welcome to SvelteKit</h1>
 <p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
 
-<form method="post" action="?/fetch">
-	<!-- <input type="text" name="name" /> -->
-	<input type="submit" value="Récupérer" />
-</form>
+<div style="display: flex; flex-direction: column; gap: 1rem;">
+	<form method="post" action="?/getMunicipalities">
+		<input type="submit" value="Récupérer communes" />
+	</form>
 
-{#each data.jobs as job}
-	<p>{job.intitule}</p>
-{/each}
+	<form method="post" action="?/fetch">
+		<select name="city">
+			<option value="rennes">Rennes</option>
+			<option value="bordeaux">Bordeaux</option>
+			<option value="paris">Paris</option>
+		</select>
+		<input type="submit" value="Récupérer offres" />
+	</form>
+</div>
+
+{#if form?.jobs}
+	<ul>
+		{#each form.jobs as job}
+			<li>
+				{#if job.url}
+					<a href={job.url}>{job.intitule}</a>
+				{:else}
+					{job.intitule}
+				{/if}
+				<div style="margin-left: 1rem; font-style: italic">
+					{job.description.substring(0, 100)}...
+				</div>
+			</li>
+		{/each}
+	</ul>
+{/if}

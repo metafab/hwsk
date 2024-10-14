@@ -1,3 +1,5 @@
+import type { Job } from "./Job"
+
 async function getAccessToken() {
   const response = await fetch("https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=/partenaire", {
     method: 'POST',
@@ -19,12 +21,24 @@ async function getAccessToken() {
   return data.access_token
 }
 
-export async function getJobs() {
+export async function getJobs(city: "rennes" | "bordeaux" | "paris"): Promise<Array<Job>> {
   const accessToken = await getAccessToken()
 
   const url = new URL("offres/search", baseUrl)
   url.searchParams.set("range", "0-5")
   url.searchParams.set("sort", "1") // Date de création horodatée décroissante, pertinence décroissante, distance croissante, origine de l’offre
+  switch (city) {
+    case "rennes":
+      url.searchParams.set("commune", "35238")
+      break
+    case "bordeaux":
+      url.searchParams.set("commune", "33063")
+      break
+    case "paris":
+      url.searchParams.set("departement", "75")
+      break
+  }
+
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -36,10 +50,10 @@ export async function getJobs() {
   }
 
   const data = await response.json()
-  console.log({ data })
-  return data.resultats.map((job: Job) => ({
+  return data.resultats.map((job: FranceTravailJob) => ({
     intitule: job.intitule,
-    // description: job.description,
+    description: job.description,
+    url: job.contact?.urlPostulation || "",
     lieu: job.lieuTravail.libelle,
     salaire: job.salaire.libelle || job.salaire.commentaire,
     entreprise: job.entreprise.nom,
@@ -62,13 +76,30 @@ export async function getContractTypes() {
     throw new Error(`Failed to fetch contract types: ${response.statusText}`)
   }
 
-  const data = await response.json()
-  console.log({ data })
-  return data
+  return await response.json()
 }
 
-type Job = {
+export async function getMunicipalities() {
+  const accessToken = await getAccessToken()
+
+  const url = new URL("referentiel/communes", baseUrl)
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+    },
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to fetch municipalities: ${response.statusText}`)
+  }
+
+  return await response.json()
+}
+
+type FranceTravailJob = {
   intitule: string
+  description: string
+  url: string
   lieuTravail: {
     libelle: string
   }
@@ -81,6 +112,9 @@ type Job = {
   }
   typeContratLibelle: string
   dateCreation: string
+  contact?: {
+    urlPostulation: string
+  }
 }
 
 const baseUrl = "https://api.francetravail.io/partenaire/offresdemploi/v2/"
