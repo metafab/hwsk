@@ -1,3 +1,4 @@
+import { FRANCE_TRAVAIL_CLIENT_ID, FRANCE_TRAVAIL_CLIENT_SECRET } from "$env/static/private"
 import type { Job } from "./Job"
 
 async function getAccessToken() {
@@ -8,8 +9,8 @@ async function getAccessToken() {
     },
     body: new URLSearchParams([
       ["grant_type", "client_credentials"],
-      ["client_id", "PAR_hellowork_32213dc571edaf23011c248445507077b0a27f742b0dbcb48f1667ec08a6a98e"],
-      ["client_secret", "1e99827a1dfa2aa83dfa011d5f44fca96e7295a45e1e2f36c32345222c25662f"],
+      ["client_id", FRANCE_TRAVAIL_CLIENT_ID],
+      ["client_secret", FRANCE_TRAVAIL_CLIENT_SECRET],
       ["scope", "api_offresdemploiv2 o2dsoffre"],
     ]),
   })
