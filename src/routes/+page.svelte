@@ -16,6 +16,7 @@
 			<option value="bordeaux">Bordeaux</option>
 			<option value="paris">Paris</option>
 		</select>
+		<input type="number" name="count" value="10" min="1" max="150" />
 		<input type="submit" value="Récupérer offres" />
 	</form>
 </div>

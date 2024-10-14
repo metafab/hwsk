@@ -21,11 +21,11 @@ async function getAccessToken() {
   return data.access_token
 }
 
-export async function getJobs(city: "rennes" | "bordeaux" | "paris"): Promise<Array<Job>> {
+export async function getJobs(city: "rennes" | "bordeaux" | "paris", count: number): Promise<Array<Job>> {
   const accessToken = await getAccessToken()
 
   const url = new URL("offres/search", baseUrl)
-  url.searchParams.set("range", "0-5")
+  url.searchParams.set("range", `0-${count - 1}`)
   url.searchParams.set("sort", "1") // Date de création horodatée décroissante, pertinence décroissante, distance croissante, origine de l’offre
   switch (city) {
     case "rennes":
@@ -104,6 +104,7 @@ export async function getMunicipalities() {
 }
 
 type FranceTravailJob = {
+  id: string
   intitule: string
   description: string
   url: string
