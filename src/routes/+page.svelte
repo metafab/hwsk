@@ -6,18 +6,22 @@
 
 <h1>Offres France Travail</h1>
 
-<div style="display: flex; flex-direction: column; gap: 1rem;">
+<div style="display: flex; flex-direction: column; gap: 2rem;">
 	<form method="post" action="?/getMunicipalities">
 		<input type="submit" value="Récupérer communes" />
 	</form>
 
-	<form method="post" action="?/fetchJobs">
+	<form
+		method="post"
+		action="?/fetchJobs"
+		style="display: flex; flex-direction: column; gap: 0.5rem; align-items: flex-start; flex: 1"
+	>
 		<select name="city">
 			{#each Object.values(City).filter((city) => typeof city === 'string') as city}
 				<option value={city}>{city}</option>
 			{/each}
 		</select>
-		<input type="number" name="count" value="10" min="1" max="150" />
+		<input type="date" name="startDate" value={new Date().toISOString().split('T')[0]} />
 		<input type="submit" value="Récupérer offres" />
 	</form>
 

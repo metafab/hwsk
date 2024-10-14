@@ -13,19 +13,19 @@ export const actions = {
   fetchJobs: async ({ request }) => {
     const formData = await request.formData()
     const city = formData.get('city') as unknown as City
-    const count = Number(formData.get('count'))
+    const startDate = new Date(formData.get('startDate') as string)
 
-    const jobs = await getJobs(city, count)
-    // console.log({ jobs })
+    let afterDate = await getMaxJobDateByCity(city)
+    if (!afterDate || startDate > afterDate) {
+      afterDate = startDate
+    }
+    const jobs = await Array.fromAsync(getJobs(city, afterDate))
 
     await saveJobs(jobs)
 
     return {
       jobs,
     }
-
-    // const contractTypes = await getContractTypes()
-    // console.log({ contractTypes })
   },
 
   getMunicipalities: async () => {
@@ -46,7 +46,19 @@ export const actions = {
 } satisfies Actions
 
 async function saveJobs(jobs: Job[]) {
+  await remult.repo(Job).insert(jobs)
+}
+
+async function getMaxJobDateByCity(city: City) {
   const repo = remult.repo(Job)
-  await repo.insert(jobs)
+  const lastJob = await repo.findFirst({
+    city: city,
+  },
+    {
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+  return lastJob?.createdAt
 }
 

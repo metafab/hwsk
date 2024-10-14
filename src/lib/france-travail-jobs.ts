@@ -2,13 +2,39 @@ import type { Job } from "../shared/Job"
 import { City } from "./City"
 import { getAccessToken } from "./france-travail-auth"
 
-export async function getJobs(city: City, count: number): Promise<Array<Job>> {
+export async function* getJobs(city: City, afterDate: Date | undefined): AsyncGenerator<Job> {
   const accessToken = await getAccessToken()
 
+  while (true) {
+    const jobs = await internalGetJobs(city, afterDate, accessToken)
+    if (!jobs.length) {
+      break
+    }
+    for (const job of jobs) {
+      yield job
+    }
+    afterDate = jobs[0].createdAt
+  }
+}
+
+async function internalGetJobs(city: City, afterDate: Date | undefined, accessToken: string): Promise<Array<Job>> {
+  const maxCount = 20
   const url = new URL("offres/search", BASE_URL)
-  url.searchParams.set("range", `0-${count - 1}`)
+  if (afterDate) {
+    // Min date granularity is 1 second
+    const minDate = new Date(afterDate)
+    minDate.setSeconds(minDate.getSeconds() + 1)
+
+    // Max date arbitrarily far in the future because we want all jobs after the min date and maxCreationDate is required
+    const maxDate = new Date(minDate)
+    maxDate.setFullYear(maxDate.getFullYear() + 1)
+
+    url.searchParams.set("minCreationDate", formatDate(minDate))
+    url.searchParams.set("maxCreationDate", formatDate(maxDate))
+  }
   url.searchParams.set("inclureLimitrophes", "false")
   url.searchParams.set("distance", "0")
+  url.searchParams.set("range", `0-${maxCount - 1}`)
   url.searchParams.set("sort", "1") // Date de création horodatée décroissante, pertinence décroissante, distance croissante, origine de l’offre
   setCityFilter(city, url)
 
@@ -19,15 +45,19 @@ export async function getJobs(city: City, count: number): Promise<Array<Job>> {
     },
   })
   if (!response.ok) {
-    throw new Error(`Failed to fetch jobs: ${response.statusText}`)
+    throw new Error(`Failed to fetch jobs: ${response.statusText}\n${await response.text()}`)
+  }
+
+  if (!response.body) {
+    return []
   }
 
   const data = await response.json()
   // console.log(JSON.stringify(data, null, 2))
 
   return data.resultats
-    .filter((job: FranceTravailJob) => isCityJob(city, job))
     .map((job: FranceTravailJob) => mapJob(city, job))
+    .sort((a: Job, b: Job) => b.createdAt!.valueOf() - a.createdAt!.valueOf())
 }
 
 export async function getContractTypes() {
@@ -75,8 +105,8 @@ function mapJob(city: City, job: FranceTravailJob): Job {
     salary: job.salaire.libelle || job.salaire.commentaire,
     company: job.entreprise.nom,
     contractType: job.typeContratLibelle,
-    createdAt: job.dateCreation,
-    updatedAt: job.dateActualisation,
+    createdAt: new Date(job.dateCreation),
+    updatedAt: job.dateActualisation ? new Date(job.dateActualisation) : undefined,
   }
 }
 
@@ -97,7 +127,10 @@ function setCityFilter(city: City, url: URL) {
 }
 
 /**
+ * Formats the date to the ISO string format required by the API (without the milliseconds)
  */
+function formatDate(date: Date) {
+  return date.toISOString().slice(0, -5) + "Z"
 }
 
 type FranceTravailJob = {
@@ -117,8 +150,8 @@ type FranceTravailJob = {
     nom: string
   }
   typeContratLibelle: string
-  dateCreation: Date
-  dateActualisation?: Date
+  dateCreation: string
+  dateActualisation?: string
   contact?: {
     urlPostulation: string
   }
