@@ -22,6 +22,9 @@ export const actions = {
 
     const jobs = await getJobs()
     console.log({ jobs })
+
+    // const contractTypes = await getContractTypes()
+    // console.log({ contractTypes })
   },
 } satisfies Actions
 

@@ -22,7 +22,7 @@ async function getAccessToken() {
 export async function getJobs() {
   const accessToken = await getAccessToken()
 
-  const url = new URL(baseUrl + "offres/search")
+  const url = new URL("offres/search", baseUrl)
   url.searchParams.set("range", "0-5")
   url.searchParams.set("sort", "1") // Date de création horodatée décroissante, pertinence décroissante, distance croissante, origine de l’offre
   const response = await fetch(url, {
@@ -46,6 +46,25 @@ export async function getJobs() {
     typeContrat: job.typeContratLibelle,
     datePublication: new Date(job.dateCreation),
   }))
+}
+
+export async function getContractTypes() {
+  const accessToken = await getAccessToken()
+
+  const url = new URL("referentiel/typesContrats", baseUrl)
+  const response = await fetch(url, {
+    method: 'GET',
+    headers: {
+      "Authorization": `Bearer ${accessToken}`,
+    },
+  })
+  if (!response.ok) {
+    throw new Error(`Failed to fetch contract types: ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  console.log({ data })
+  return data
 }
 
 type Job = {
