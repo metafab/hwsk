@@ -1,5 +1,6 @@
 import { FRANCE_TRAVAIL_CLIENT_ID, FRANCE_TRAVAIL_CLIENT_SECRET } from "$env/static/private"
 import type { Job } from "../shared/Job"
+import { City } from "./City"
 
 async function getAccessToken() {
   const response = await fetch("https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=/partenaire", {
@@ -22,7 +23,7 @@ async function getAccessToken() {
   return data.access_token
 }
 
-export async function getJobs(city: "rennes" | "bordeaux" | "paris", count: number): Promise<Array<Job>> {
+export async function getJobs(city: City, count: number): Promise<Array<Job>> {
   const accessToken = await getAccessToken()
 
   const url = new URL("offres/search", BASE_URL)
@@ -82,13 +83,13 @@ export async function getMunicipalities() {
   return await response.json()
 }
 
-function mapJob(city: string, job: FranceTravailJob): Job {
+function mapJob(city: City, job: FranceTravailJob): Job {
   return {
     id: job.id,
     title: job.intitule,
     description: job.description,
     url: job.contact?.urlPostulation || job.origineOffre.urlOrigine,
-    city,
+    city: city.toString(),
     location: job.lieuTravail.libelle,
     salary: job.salaire.libelle || job.salaire.commentaire,
     company: job.entreprise.nom,
@@ -98,15 +99,15 @@ function mapJob(city: string, job: FranceTravailJob): Job {
   }
 }
 
-function setCityFilter(city: string, url: URL) {
+function setCityFilter(city: City, url: URL) {
   switch (city) {
-    case "rennes":
+    case City.Rennes:
       url.searchParams.set("commune", RENNES_MUNICIPALITY_CODE)
       break
-    case "bordeaux":
+    case City.Bordeaux:
       url.searchParams.set("commune", BORDEAUX_MUNICIPALITY_CODE)
       break
-    case "paris":
+    case City.Paris:
       url.searchParams.set("departement", PARIS_DEPARTMENT_CODE)
       break
     default:
@@ -117,14 +118,15 @@ function setCityFilter(city: string, url: URL) {
 /**
  * Checks if the job is for the given city because the API returns jobs for other cities
  */
-function isCityJob(city: string, job: FranceTravailJob) {
+function isCityJob(city: City, job: FranceTravailJob) {
   switch (city) {
-    case "rennes":
+    case City.Rennes:
       return job.lieuTravail.commune === RENNES_MUNICIPALITY_CODE
-    case "bordeaux":
+    case City.Bordeaux:
       return job.lieuTravail.commune === BORDEAUX_MUNICIPALITY_CODE
-    case "paris":
-      return job.lieuTravail.commune.startsWith(PARIS_DEPARTMENT_CODE)
+    case City.Paris:
+      console.log(job.lieuTravail)
+      return job.lieuTravail.commune!.startsWith(PARIS_DEPARTMENT_CODE)
     default:
       throw new Error(`City not supported: ${city}`)
   }
@@ -137,7 +139,7 @@ type FranceTravailJob = {
   url: string
   lieuTravail: {
     libelle: string
-    commune: string
+    commune?: string
   }
   salaire: {
     libelle: string

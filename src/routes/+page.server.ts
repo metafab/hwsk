@@ -2,25 +2,17 @@ import { getJobs, getMunicipalities } from '$lib/offres-france-travail'
 import { remult } from 'remult'
 import { Job } from '../shared/Job'
 import type { PageServerLoad, Actions } from './$types'
+import type { City } from '$lib/City'
 
 export const load = (async () => {
-  return {
-    // jobs: [
-    //   {
-    //     intitule: 'Offre 1',
-    //   },
-    //   {
-    //     intitule: 'Offre 2',
-    //   },
-    // ],
-  }
+  return {}
 }) satisfies PageServerLoad
 
 
 export const actions = {
-  fetch: async ({ request }) => {
+  fetchJobs: async ({ request }) => {
     const formData = await request.formData()
-    const city = formData.get('city') as 'rennes' | 'bordeaux' | 'paris'
+    const city = formData.get('city') as unknown as City
     const count = Number(formData.get('count'))
 
     const jobs = await getJobs(city, count)
