@@ -19,9 +19,18 @@
 		<input type="number" name="count" value="10" min="1" max="150" />
 		<input type="submit" value="Récupérer offres" />
 	</form>
+
+	<form method="post" action="?/emptyJobs">
+		<input
+			type="submit"
+			value="Supprimer toutes les offres"
+			style="background-color: red; color: white"
+		/>
+	</form>
 </div>
 
 {#if form?.jobs}
+	<h2>Offres importées</h2>
 	<ul>
 		{#each form.jobs as job}
 			<li>

@@ -46,6 +46,11 @@ export const actions = {
         .sort((a: any, b: any) => a.codePostal.localeCompare(b.codePostal))
     })
   },
+
+  emptyJobs: async () => {
+    // Hack to delete all jobs because Remult doesn't support it
+    await remult.repo(Job).deleteMany({ where: { id: { $not: undefined } } })
+  },
 } satisfies Actions
 
 async function saveJobs(jobs: Job[]) {
