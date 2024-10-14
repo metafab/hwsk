@@ -1,8 +1,8 @@
-import { getJobs, getMunicipalities } from '$lib/offres-france-travail'
+import type { City } from '$lib/City'
+import { getJobs, getMunicipalities } from '$lib/france-travail-jobs'
 import { remult } from 'remult'
 import { Job } from '../shared/Job'
-import type { PageServerLoad, Actions } from './$types'
-import type { City } from '$lib/City'
+import type { Actions, PageServerLoad } from './$types'
 
 export const load = (async () => {
   return {}
