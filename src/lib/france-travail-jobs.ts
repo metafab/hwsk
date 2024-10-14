@@ -7,6 +7,8 @@ export async function getJobs(city: City, count: number): Promise<Array<Job>> {
 
   const url = new URL("offres/search", BASE_URL)
   url.searchParams.set("range", `0-${count - 1}`)
+  url.searchParams.set("inclureLimitrophes", "false")
+  url.searchParams.set("distance", "0")
   url.searchParams.set("sort", "1") // Date de création horodatée décroissante, pertinence décroissante, distance croissante, origine de l’offre
   setCityFilter(city, url)
 
@@ -95,20 +97,7 @@ function setCityFilter(city: City, url: URL) {
 }
 
 /**
- * Checks if the job is for the given city because the API returns jobs for other cities
  */
-function isCityJob(city: City, job: FranceTravailJob) {
-  switch (city) {
-    case City.Rennes:
-      return job.lieuTravail.commune === RENNES_MUNICIPALITY_CODE
-    case City.Bordeaux:
-      return job.lieuTravail.commune === BORDEAUX_MUNICIPALITY_CODE
-    case City.Paris:
-      console.log(job.lieuTravail)
-      return job.lieuTravail.commune!.startsWith(PARIS_DEPARTMENT_CODE)
-    default:
-      throw new Error(`City not supported: ${city}`)
-  }
 }
 
 type FranceTravailJob = {
