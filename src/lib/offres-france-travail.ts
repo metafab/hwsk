@@ -25,20 +25,10 @@ async function getAccessToken() {
 export async function getJobs(city: "rennes" | "bordeaux" | "paris", count: number): Promise<Array<Job>> {
   const accessToken = await getAccessToken()
 
-  const url = new URL("offres/search", baseUrl)
+  const url = new URL("offres/search", BASE_URL)
   url.searchParams.set("range", `0-${count - 1}`)
   url.searchParams.set("sort", "1") // Date de création horodatée décroissante, pertinence décroissante, distance croissante, origine de l’offre
-  switch (city) {
-    case "rennes":
-      url.searchParams.set("commune", "35238")
-      break
-    case "bordeaux":
-      url.searchParams.set("commune", "33063")
-      break
-    case "paris":
-      url.searchParams.set("departement", "75")
-      break
-  }
+  setCityFilter(city, url)
 
   const response = await fetch(url, {
     method: 'GET',
@@ -53,30 +43,15 @@ export async function getJobs(city: "rennes" | "bordeaux" | "paris", count: numb
   const data = await response.json()
   // console.log(JSON.stringify(data, null, 2))
 
-  return data.resultats.map((job: FranceTravailJob) => mapJob(city, job))
-}
-
-function mapJob(city: string, job: FranceTravailJob): Job {
-  return {
-    id: job.id,
-    title: job.intitule,
-    description: job.description,
-    url: job.contact?.urlPostulation || job.origineOffre.urlOrigine,
-    city,
-    location: job.lieuTravail.libelle,
-    salary: job.salaire.libelle || job.salaire.commentaire,
-    company: job.entreprise.nom,
-    contractType: job.typeContratLibelle,
-    // createdAt: new Date(job.dateCreation),
-    createdAt: job.dateCreation,
-    updatedAt: job.dateActualisation,
-  }
+  return data.resultats
+    .filter((job: FranceTravailJob) => isCityJob(city, job))
+    .map((job: FranceTravailJob) => mapJob(city, job))
 }
 
 export async function getContractTypes() {
   const accessToken = await getAccessToken()
 
-  const url = new URL("referentiel/typesContrats", baseUrl)
+  const url = new URL("referentiel/typesContrats", BASE_URL)
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -93,7 +68,7 @@ export async function getContractTypes() {
 export async function getMunicipalities() {
   const accessToken = await getAccessToken()
 
-  const url = new URL("referentiel/communes", baseUrl)
+  const url = new URL("referentiel/communes", BASE_URL)
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -107,6 +82,54 @@ export async function getMunicipalities() {
   return await response.json()
 }
 
+function mapJob(city: string, job: FranceTravailJob): Job {
+  return {
+    id: job.id,
+    title: job.intitule,
+    description: job.description,
+    url: job.contact?.urlPostulation || job.origineOffre.urlOrigine,
+    city,
+    location: job.lieuTravail.libelle,
+    salary: job.salaire.libelle || job.salaire.commentaire,
+    company: job.entreprise.nom,
+    contractType: job.typeContratLibelle,
+    createdAt: job.dateCreation,
+    updatedAt: job.dateActualisation,
+  }
+}
+
+function setCityFilter(city: string, url: URL) {
+  switch (city) {
+    case "rennes":
+      url.searchParams.set("commune", RENNES_MUNICIPALITY_CODE)
+      break
+    case "bordeaux":
+      url.searchParams.set("commune", BORDEAUX_MUNICIPALITY_CODE)
+      break
+    case "paris":
+      url.searchParams.set("departement", PARIS_DEPARTMENT_CODE)
+      break
+    default:
+      throw new Error(`City not supported: ${city}`)
+  }
+}
+
+/**
+ * Checks if the job is for the given city because the API returns jobs for other cities
+ */
+function isCityJob(city: string, job: FranceTravailJob) {
+  switch (city) {
+    case "rennes":
+      return job.lieuTravail.commune === RENNES_MUNICIPALITY_CODE
+    case "bordeaux":
+      return job.lieuTravail.commune === BORDEAUX_MUNICIPALITY_CODE
+    case "paris":
+      return job.lieuTravail.commune.startsWith(PARIS_DEPARTMENT_CODE)
+    default:
+      throw new Error(`City not supported: ${city}`)
+  }
+}
+
 type FranceTravailJob = {
   id: string
   intitule: string
@@ -114,6 +137,7 @@ type FranceTravailJob = {
   url: string
   lieuTravail: {
     libelle: string
+    commune: string
   }
   salaire: {
     libelle: string
@@ -133,4 +157,7 @@ type FranceTravailJob = {
   }
 }
 
-const baseUrl = "https://api.francetravail.io/partenaire/offresdemploi/v2/"
+const BASE_URL = "https://api.francetravail.io/partenaire/offresdemploi/v2/"
+const RENNES_MUNICIPALITY_CODE = "35238"
+const BORDEAUX_MUNICIPALITY_CODE = "33063"
+const PARIS_DEPARTMENT_CODE = "75"
