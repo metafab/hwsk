@@ -50,16 +50,23 @@ export async function getJobs(city: "rennes" | "bordeaux" | "paris"): Promise<Ar
   }
 
   const data = await response.json()
-  return data.resultats.map((job: FranceTravailJob) => ({
+  // console.log(JSON.stringify(data, null, 2))
+
+  return data.resultats.map(mapJob)
+}
+
+function mapJob(job: FranceTravailJob): Job {
+  return {
+    id: job.id,
     intitule: job.intitule,
     description: job.description,
-    url: job.contact?.urlPostulation || "",
+    url: job.contact?.urlPostulation || job.origineOffre.urlOrigine,
     lieu: job.lieuTravail.libelle,
     salaire: job.salaire.libelle || job.salaire.commentaire,
     entreprise: job.entreprise.nom,
     typeContrat: job.typeContratLibelle,
     datePublication: new Date(job.dateCreation),
-  }))
+  }
 }
 
 export async function getContractTypes() {
@@ -114,6 +121,9 @@ type FranceTravailJob = {
   dateCreation: string
   contact?: {
     urlPostulation: string
+  }
+  origineOffre: {
+    urlOrigine: string
   }
 }
 

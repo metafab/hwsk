@@ -1,4 +1,5 @@
 export type Job = {
+  id: string
   intitule: string
   description: string
   url?: string
