@@ -1,4 +1,6 @@
 import { getJobs, getMunicipalities } from '$lib/offres-france-travail'
+import { remult } from 'remult'
+import { Job } from '../shared/Job'
 import type { PageServerLoad, Actions } from './$types'
 
 export const load = (async () => {
@@ -24,6 +26,8 @@ export const actions = {
     const jobs = await getJobs(city, count)
     // console.log({ jobs })
 
+    await saveJobs(jobs)
+
     return {
       jobs,
     }
@@ -43,4 +47,9 @@ export const actions = {
     })
   },
 } satisfies Actions
+
+async function saveJobs(jobs: Job[]) {
+  const repo = remult.repo(Job)
+  await repo.insert(jobs)
+}
 

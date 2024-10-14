@@ -25,10 +25,11 @@
 	<ul>
 		{#each form.jobs as job}
 			<li>
+				{job.id} -
 				{#if job.url}
-					<a href={job.url}>{job.intitule}</a>
+					<a href={job.url}>{job.title}</a>
 				{:else}
-					{job.intitule}
+					{job.title}
 				{/if}
 				<div style="margin-left: 1rem; font-style: italic">
 					{job.description.substring(0, 100)}...

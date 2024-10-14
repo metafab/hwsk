@@ -1,5 +1,5 @@
 import { FRANCE_TRAVAIL_CLIENT_ID, FRANCE_TRAVAIL_CLIENT_SECRET } from "$env/static/private"
-import type { Job } from "./Job"
+import type { Job } from "../shared/Job"
 
 async function getAccessToken() {
   const response = await fetch("https://entreprise.francetravail.fr/connexion/oauth2/access_token?realm=/partenaire", {
@@ -53,20 +53,23 @@ export async function getJobs(city: "rennes" | "bordeaux" | "paris", count: numb
   const data = await response.json()
   // console.log(JSON.stringify(data, null, 2))
 
-  return data.resultats.map(mapJob)
+  return data.resultats.map((job: FranceTravailJob) => mapJob(city, job))
 }
 
-function mapJob(job: FranceTravailJob): Job {
+function mapJob(city: string, job: FranceTravailJob): Job {
   return {
     id: job.id,
-    intitule: job.intitule,
+    title: job.intitule,
     description: job.description,
     url: job.contact?.urlPostulation || job.origineOffre.urlOrigine,
-    lieu: job.lieuTravail.libelle,
-    salaire: job.salaire.libelle || job.salaire.commentaire,
-    entreprise: job.entreprise.nom,
-    typeContrat: job.typeContratLibelle,
-    datePublication: new Date(job.dateCreation),
+    city,
+    location: job.lieuTravail.libelle,
+    salary: job.salaire.libelle || job.salaire.commentaire,
+    company: job.entreprise.nom,
+    contractType: job.typeContratLibelle,
+    // createdAt: new Date(job.dateCreation),
+    createdAt: job.dateCreation,
+    updatedAt: job.dateActualisation,
   }
 }
 
@@ -120,7 +123,8 @@ type FranceTravailJob = {
     nom: string
   }
   typeContratLibelle: string
-  dateCreation: string
+  dateCreation: Date
+  dateActualisation?: Date
   contact?: {
     urlPostulation: string
   }
