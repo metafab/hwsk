@@ -6,7 +6,8 @@ export async function* getJobs(city: City, afterDate: Date | undefined): AsyncGe
   const accessToken = await getAccessToken()
 
   while (true) {
-    const jobs = await internalGetJobs(city, afterDate, accessToken)
+    // Fetch jobs from the API by batch
+    const jobs = await getJobsBatch(city, afterDate, 20, accessToken)
     if (!jobs.length) {
       break
     }
@@ -17,27 +18,8 @@ export async function* getJobs(city: City, afterDate: Date | undefined): AsyncGe
   }
 }
 
-async function internalGetJobs(city: City, afterDate: Date | undefined, accessToken: string): Promise<Array<Job>> {
-  const maxCount = 20
-  const url = new URL("offres/search", BASE_URL)
-  if (afterDate) {
-    // Min date granularity is 1 second
-    const minDate = new Date(afterDate)
-    minDate.setSeconds(minDate.getSeconds() + 1)
-
-    // Max date arbitrarily far in the future because we want all jobs after the min date and maxCreationDate is required
-    const maxDate = new Date(minDate)
-    maxDate.setFullYear(maxDate.getFullYear() + 1)
-
-    url.searchParams.set("minCreationDate", formatDate(minDate))
-    url.searchParams.set("maxCreationDate", formatDate(maxDate))
-  }
-  url.searchParams.set("inclureLimitrophes", "false")
-  url.searchParams.set("distance", "0")
-  url.searchParams.set("range", `0-${maxCount - 1}`)
-  url.searchParams.set("sort", "1") // Date de création horodatée décroissante, pertinence décroissante, distance croissante, origine de l’offre
-  setCityFilter(city, url)
-
+async function getJobsBatch(city: City, afterDate: Date | undefined, maxCount: number, accessToken: string): Promise<Array<Job>> {
+  const url = buildJobSeachUrl(city, afterDate, maxCount)
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -47,7 +29,6 @@ async function internalGetJobs(city: City, afterDate: Date | undefined, accessTo
   if (!response.ok) {
     throw new Error(`Failed to fetch jobs: ${response.statusText}\n${await response.text()}`)
   }
-
   if (!response.body) {
     return []
   }
@@ -57,6 +38,7 @@ async function internalGetJobs(city: City, afterDate: Date | undefined, accessTo
 
   return data.resultats
     .map((job: FranceTravailJob) => mapJob(city, job))
+    // Sort by creation date descending as the API sort seems not to be reliable
     .sort((a: Job, b: Job) => b.createdAt!.valueOf() - a.createdAt!.valueOf())
 }
 
@@ -126,6 +108,32 @@ function setCityFilter(city: City, url: URL) {
   }
 }
 
+function buildJobSeachUrl(city: City, afterDate: Date | undefined, maxCount: number): URL {
+  const url = new URL("offres/search", BASE_URL)
+  if (afterDate) {
+    // Min date granularity is 1 second
+    const minDate = new Date(afterDate)
+    minDate.setSeconds(minDate.getSeconds() + 1)
+
+    // Max date arbitrarily far in the future because we want all jobs after the min date and maxCreationDate is required
+    const maxDate = new Date(minDate)
+    maxDate.setFullYear(maxDate.getFullYear() + 1)
+
+    url.searchParams.set("minCreationDate", formatDate(minDate))
+    url.searchParams.set("maxCreationDate", formatDate(maxDate))
+  }
+
+  // Limit the search to the city and exclude neighboring municipalities
+  setCityFilter(city, url)
+  url.searchParams.set("inclureLimitrophes", "false")
+  url.searchParams.set("distance", "0")
+
+  url.searchParams.set("range", `0-${maxCount - 1}`)
+  url.searchParams.set("sort", "1") // Date de création horodatée décroissante, pertinence décroissante, distance croissante, origine de l’offre
+
+  return url
+}
+
 /**
  * Formats the date to the ISO string format required by the API (without the milliseconds)
  */
@@ -158,6 +166,7 @@ type FranceTravailJob = {
   origineOffre: {
     urlOrigine: string
   }
+  typeContrat: string
 }
 
 const BASE_URL = "https://api.francetravail.io/partenaire/offresdemploi/v2/"
