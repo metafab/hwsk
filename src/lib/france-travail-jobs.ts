@@ -52,11 +52,7 @@ async function getJobsRange(city: City, afterDate: Date | undefined, start: numb
   }
 
   const data = await response.json()
-
-  const jobs = data.resultats
-    .map((job: FranceTravailJob) => mapJob(city, job))
-    // Sort by creation date descending as the API sort seems not to be reliable
-    .sort((a: Job, b: Job) => b.createdAt!.valueOf() - a.createdAt!.valueOf())
+  const jobs = data.resultats.map((job: FranceTravailJob) => mapJob(city, job))
 
   return { responseRange, jobs }
 }
