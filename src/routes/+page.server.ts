@@ -23,6 +23,8 @@ export const actions = {
 
     await saveJobs(jobs)
 
+    logStats(jobs)
+
     return {
       jobs,
     }
@@ -65,3 +67,25 @@ async function getMaxJobDateByCity(city: City) {
   return lastJob?.createdAt
 }
 
+// We wouldn't need this in C# with LINQ's GroupBy...
+function countBy<T>(array: Array<T>, key: keyof T) {
+  return array
+    .map(obj => obj[key])
+    .reduce((accumulator, value) => {
+      accumulator[value as any] = (accumulator[value] || 0) + 1 // eslint-disable-line @typescript-eslint/no-explicit-any
+      return accumulator
+    }, {} as Record<any, number>) // eslint-disable-line @typescript-eslint/no-explicit-any
+}
+
+// We wouldn't need this in C# with LINQ's OrderByDescending...
+function orderByDescending(record: Record<any, number>) { // eslint-disable-line @typescript-eslint/no-explicit-any
+  return Object.entries(record).sort((a, b) => b[1] - a[1])
+}
+
+function logStats(jobs: Array<Job>) {
+  console.log("Nombre d'offres importées", jobs.length)
+  const countsByCompany = orderByDescending(countBy(jobs, 'company'))
+  console.log("Nombre d'offres importées par entreprise", countsByCompany)
+  const countsByContractType = orderByDescending(countBy(jobs, 'contractType'))
+  console.log("Nombre d'offres importées par type de contrat", countsByContractType)
+}
