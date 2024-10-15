@@ -23,7 +23,7 @@
 			fetching = true;
 
 			return async ({ update }) => {
-				await update();
+				await update({ reset: false });
 				fetching = false;
 			};
 		}}
@@ -49,7 +49,7 @@
 			deleting = true;
 
 			return async ({ update }) => {
-				await update();
+				await update({ reset: false });
 				deleting = false;
 			};
 		}}
