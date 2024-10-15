@@ -5,21 +5,29 @@ import { getAccessToken } from "./france-travail-auth"
 export async function* getJobs(city: City, afterDate: Date | undefined): AsyncGenerator<Job> {
   const accessToken = await getAccessToken()
 
+  const batchSize = 20
+  let start = 0
+  let end = start + batchSize - 1
   while (true) {
-    // Fetch jobs from the API by batch
-    const jobs = await getJobsBatch(city, afterDate, 20, accessToken)
-    if (!jobs.length) {
-      break
-    }
-    for (const job of jobs) {
+    // Fetch jobs from the API for the current range
+    const result = await getJobsRange(city, afterDate, start, end, accessToken)
+
+    for (const job of result.jobs) {
       yield job
     }
-    afterDate = jobs[0].createdAt
+
+    if (result.responseRange.end >= result.responseRange.total - 1) {
+      return
+    }
+
+    start = end + 1
+    end = Math.min(start + batchSize, result.responseRange.total - 1)
   }
 }
 
-async function getJobsBatch(city: City, afterDate: Date | undefined, maxCount: number, accessToken: string): Promise<Array<Job>> {
-  const url = buildJobSeachUrl(city, afterDate, maxCount)
+async function getJobsRange(city: City, afterDate: Date | undefined, start: number, end: number, accessToken: string):
+  Promise<{ responseRange: ResponseRange, jobs: Array<Job> }> {
+  const url = buildJobSeachUrl(city, afterDate, start, end)
   const response = await fetch(url, {
     method: 'GET',
     headers: {
@@ -29,17 +37,21 @@ async function getJobsBatch(city: City, afterDate: Date | undefined, maxCount: n
   if (!response.ok) {
     throw new Error(`Failed to fetch jobs: ${response.statusText}\n${await response.text()}`)
   }
+
+  const responseRange = parseResponseRange(response.headers.get("Content-Range"))
+
   if (!response.body) {
-    return []
+    return { responseRange: { start: 0, end: 0, total: 0 }, jobs: [] }
   }
 
   const data = await response.json()
-  // console.log(JSON.stringify(data, null, 2))
 
-  return data.resultats
+  const jobs = data.resultats
     .map((job: FranceTravailJob) => mapJob(city, job))
     // Sort by creation date descending as the API sort seems not to be reliable
     .sort((a: Job, b: Job) => b.createdAt!.valueOf() - a.createdAt!.valueOf())
+
+  return { responseRange, jobs }
 }
 
 export async function getContractTypes() {
@@ -108,7 +120,7 @@ function setCityFilter(city: City, url: URL) {
   }
 }
 
-function buildJobSeachUrl(city: City, afterDate: Date | undefined, maxCount: number): URL {
+function buildJobSeachUrl(city: City, afterDate: Date | undefined, start: number, end: number): URL {
   const url = new URL("offres/search", BASE_URL)
   if (afterDate) {
     // Min date granularity is 1 second
@@ -128,7 +140,7 @@ function buildJobSeachUrl(city: City, afterDate: Date | undefined, maxCount: num
   url.searchParams.set("inclureLimitrophes", "false")
   url.searchParams.set("distance", "0")
 
-  url.searchParams.set("range", `0-${maxCount - 1}`)
+  url.searchParams.set("range", `${start}-${end}`)
   url.searchParams.set("sort", "1") // Date de création horodatée décroissante, pertinence décroissante, distance croissante, origine de l’offre
 
   return url
@@ -139,6 +151,23 @@ function buildJobSeachUrl(city: City, afterDate: Date | undefined, maxCount: num
  */
 function formatDate(date: Date) {
   return date.toISOString().slice(0, -5) + "Z"
+}
+
+function parseResponseRange(header: string | null) {
+  // Not documented but the API seems to return "*/0" when there are no jobs
+  if (!header || header.endsWith("/0")) {
+    return { start: 0, end: 0, total: 0 }
+  }
+
+  /*
+  Format : "offres p-d/t", où
+    p est l’index (débutant à 0) du premier élément renvoyé
+    d est l’index de dernier élément renvoyé
+    t est le nombre total d’éléments de la recherche
+  */
+
+  const [_, start, end, total] = header.match(/offres (\d+)-(\d+)\/(\d+)/) || [] // eslint-disable-line @typescript-eslint/no-unused-vars
+  return { start: parseInt(start), end: parseInt(end), total: parseInt(total) }
 }
 
 type FranceTravailJob = {
@@ -167,6 +196,12 @@ type FranceTravailJob = {
     urlOrigine: string
   }
   typeContrat: string
+}
+
+type ResponseRange = {
+  start: number
+  end: number
+  total: number
 }
 
 const BASE_URL = "https://api.francetravail.io/partenaire/offresdemploi/v2/"
