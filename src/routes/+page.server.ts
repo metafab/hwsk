@@ -41,7 +41,10 @@ export const actions = {
 
   emptyJobs: async () => {
     // Hack to delete all jobs because Remult doesn't support it
-    await remult.repo(Job).deleteMany({ where: { id: { $not: undefined } } })
+    const deletedCount = await remult.repo(Job).deleteMany({ where: { id: { $ne: "xxxxxx" } } })
+    return {
+      deletedCount,
+    }
   },
 } satisfies Actions
 
