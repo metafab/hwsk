@@ -33,3 +33,9 @@ Créer un fichier `.env` avec les variables d'environnement suivantes :
 FRANCE_TRAVAIL_CLIENT_ID=l'identifiant fourni par France Travail
 FRANCE_TRAVAIL_CLIENT_SECRET=le secret fourni par France Travail
 ```
+
+## Exécution
+
+```bash
+pnpm install && pnpm run dev
+```
