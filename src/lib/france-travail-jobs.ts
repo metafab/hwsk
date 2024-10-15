@@ -2,6 +2,13 @@ import type { Job } from "../shared/Job"
 import { City } from "./City"
 import { getAccessToken } from "./france-travail-auth"
 
+/**
+ * Generator that fetches jobs from the France Travail API.
+ *
+ * @param city - The city to fetch jobs for.
+ * @param afterDate - The date after which to fetch jobs.
+ * @returns An asynchronous generator that yields jobs.
+ */
 export async function* getJobs(city: City, afterDate: Date | undefined): AsyncGenerator<Job> {
   const accessToken = await getAccessToken()
 
@@ -38,7 +45,7 @@ async function getJobsRange(city: City, afterDate: Date | undefined, start: numb
     throw new Error(`Failed to fetch jobs: ${response.statusText}\n${await response.text()}`)
   }
 
-  const responseRange = parseResponseRange(response.headers.get("Content-Range"))
+  const responseRange = parseResponseRangeHeader(response.headers.get("Content-Range"))
 
   if (!response.body) {
     return { responseRange: { start: 0, end: 0, total: 0 }, jobs: [] }
@@ -153,7 +160,10 @@ function formatDate(date: Date) {
   return date.toISOString().slice(0, -5) + "Z"
 }
 
-function parseResponseRange(header: string | null) {
+/**
+ * Parses the Content-Range header from the API's response.
+ */
+function parseResponseRangeHeader(header: string | null) {
   // Not documented but the API seems to return "*/0" when there are no jobs
   if (!header || header.endsWith("/0")) {
     return { start: 0, end: 0, total: 0 }
