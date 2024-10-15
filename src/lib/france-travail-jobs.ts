@@ -12,7 +12,7 @@ import { getAccessToken } from "./france-travail-auth"
 export async function* getJobs(city: City, afterDate: Date | undefined): AsyncGenerator<Job> {
   const accessToken = await getAccessToken()
 
-  const batchSize = 20
+  const batchSize = 100
   let start = 0
   let end = start + batchSize - 1
   while (true) {
