@@ -6,6 +6,7 @@ specifiers:
   '@sveltejs/kit': ^2.0.0
   '@sveltejs/vite-plugin-svelte': ^4.0.0-next.6
   '@types/eslint': ^9.6.0
+  array-from-async: ^3.0.0
   eslint: ^9.0.0
   eslint-config-prettier: ^9.1.0
   eslint-plugin-svelte: ^2.36.0
@@ -22,6 +23,7 @@ specifiers:
   vitest: ^2.0.0
 
 dependencies:
+  array-from-async: 3.0.0
   sqlite3: 5.1.7
 
 devDependencies:
@@ -956,6 +958,10 @@ packages:
     resolution: {integrity: sha512-COROpnaoap1E2F000S62r6A60uHZnmlvomhfyT2DlTcrY1OrBKn2UhH7qn5wTC9zMvD0AY7csdPSNwKP+7WiQw==}
     engines: {node: '>= 0.4'}
     dev: true
+
+  /array-from-async/3.0.0:
+    resolution: {integrity: sha512-gV8/L4y2QB5JTXL9DMdtspGyed2M3V6nMnSN+nNg8ejyUlAAbKAjRS6pfWWINjU/MuFJFMGWPazHPor7hThXQw==}
+    dev: false
 
   /assertion-error/2.0.1:
     resolution: {integrity: sha512-Izi8RQcffqCeNVgFigKli1ssklIbpHnCYc6AknXGYoB6grJqyeby7jv12JUQgmTAnIDnbck1uxksT4dzN3PWBA==}

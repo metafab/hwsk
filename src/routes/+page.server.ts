@@ -3,6 +3,7 @@ import { getJobs, getMunicipalities } from '$lib/france-travail-jobs'
 import { remult } from 'remult'
 import { Job } from '../shared/Job'
 import type { Actions, PageServerLoad } from './$types'
+import fromAsync from 'array-from-async'
 
 export const load = (async () => {
   return {}
@@ -19,7 +20,7 @@ export const actions = {
     if (!afterDate || startDate > afterDate) {
       afterDate = startDate
     }
-    const jobs = await Array.fromAsync(getJobs(city, afterDate))
+    const jobs = await fromAsync(getJobs(city, afterDate))
 
     await saveJobs(jobs)
 

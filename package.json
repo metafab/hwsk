@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"engines": {
-		"node": ">=22.0.0"
+		"node": "20.x"
 	},
 	"scripts": {
 		"dev": "vite dev",
@@ -39,6 +39,7 @@
 		"vitest": "^2.0.0"
 	},
 	"dependencies": {
+		"array-from-async": "^3.0.0",
 		"sqlite3": "^5.1.7"
 	}
 }
