@@ -1,38 +1,35 @@
-# create-svelte
+# Exercice HelloWork avec l'API France Travail par Fabrice Marguerie
 
-Everything you need to build a Svelte project, powered by [`create-svelte`](https://github.com/sveltejs/kit/tree/main/packages/create-svelte).
+## Technologies utilisées
 
-## Creating a project
+- Sveltekit
+- TypeScript
+- Remult
+- SQLite
 
-If you're seeing this, you've probably already done this step. Congrats!
+J'ai choisi d'utiliser Svelte/SvelteKit car ce sont les technologies que j'ai le plus utilisées ces derniers mois.
 
-```bash
-# create a new project in the current directory
-npm create svelte@latest
+J'ai choisi TypeScript car je l'ai beaucoup utilisé dernièrement. J'ai regretté de ne pas avoir utilisé C# au moment de générer le rapport !
 
-# create a new project in my-app
-npm create svelte@latest my-app
+J'ai utilisé Remult pour la gestion de la base de données car je voulais tester cette bibliothèque, qui facilite la gestion données et car elle fournit directement une interface de visualisation des données (http://localhost:5173/api/admin#/entity/jobs).
+
+## Ressources pour l'API France Travail
+
+- [Référence de l'API pour récupérer les offres d'emploi](https://francetravail.io/data/api/offres-emploi/documentation#/api-reference/operations/recupererListeOffre)
+- [Schéma des données retournées par l'API](https://francetravail.io/produits-partages/catalogue/offres-emploi/documentation#/api-reference/schemas/Offre)
+- [Documentation pour OAuth](https://francetravail.io/produits-partages/documentation/utilisation-api-france-travail) (autorisation `Client credentials grant`)
+
+## Limitations
+
+- Il manque la gestion des erreurs
+- Il n'y a pas de mise à jour des offres d'emploi modifiées
+- Une fois qu'on a récupéré les offres postérieures à une date donnée, on ne peut pas récupérer les offres antérieures
+
+## Configuration
+
+Créer un fichier `.env` avec les variables d'environnement suivantes :
+
+```dosini
+FRANCE_TRAVAIL_CLIENT_ID=l'identifiant fourni par France Travail
+FRANCE_TRAVAIL_CLIENT_SECRET=le secret fourni par France Travail
 ```
-
-## Developing
-
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
-
-```bash
-npm run dev
-
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
-
-## Building
-
-To create a production version of your app:
-
-```bash
-npm run build
-```
-
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://kit.svelte.dev/docs/adapters) for your target environment.
